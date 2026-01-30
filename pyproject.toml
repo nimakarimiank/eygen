@@ -1,0 +1,16 @@
+[project]
+name = "eygen"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "numpy<2",
+    "tensorflow==2.10.0; platform_system != 'Darwin' or platform_machine != 'arm64'",
+    "tensorflow-macos==2.10.0; platform_system == 'Darwin' and platform_machine == 'arm64'",
+    "tensorflow-model-optimization>=0.7",
+    "spectraltools",
+]
+
+[tool.uv.sources]
+spectraltools = { path = "SpectralTools/TensorFlow", editable = true }
