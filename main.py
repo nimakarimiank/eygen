@@ -42,7 +42,10 @@ model.compile(**compile_dict)
 model.fit(x_train, y_train, validation_split=0.2, batch_size=300, epochs=1, verbose=1)
 model.evaluate(x_test, y_test, batch_size=300)
 
+
+print(f'Model Type: {type(model)}')
 # Now the 30% of the spectral layers node will be in place pruned according to their relevance. The eigenvalues whose magnitude is smaller than the corresponding percentile will be set to zero by masking the corresponding weights. This will also have an effect on the corresponding bias which will be also masked.
+## TODO ValueError: need at least one array to concatenate
 pruned_model = spectraltools.prune_percentile(model, 50,
                                 compile_dictionary=compile_dict)
 print(f'Pruned accuracy: {pruned_model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
