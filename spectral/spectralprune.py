@@ -43,7 +43,9 @@ def eigenvalue_cutoff(model: Model, perc):
     # the index of the layer in the model.
     for ind, lay in enumerate(layers):
         try:
-            if isinstance(lay, Spectral):.
+            if isinstance(lay, Spectral):
+                ## TODO: BUGFIX -> NO METHOD TO GET EIGENVALUES
+
                 eigvals.append(lay.get_eigenvalues()['diag_end'].squeeze())
                 index_list.append({"index": ind,
                                    "layer": type(lay).__name__})
