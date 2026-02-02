@@ -72,7 +72,21 @@ class Spectral(Layer, PrunableLayer):
         self.bias_constraint = constraints.get(bias_constraint)
         # Mask
         self.eigenvalue_mask = eigenvalue_mask
-
+    def get_eigenvalues(self):
+        """
+        Retrieves the eigenvalues of the layer.
+        This method returns a dictionary containing the eigenvalues of the layer.
+        The eigenvalues are represented by the `diag_start` and `diag_end` weights,
+        which are converted to NumPy arrays for easier manipulation.
+        Returns:
+            dict: A dictionary with the following keys:
+                - 'diag_end': NumPy array of the `diag_end` eigenvalues.
+                - 'diag_start': NumPy array of the `diag_start` eigenvalues.
+        """
+        return {
+            'diag_end': self.diag_end.numpy(),
+            'diag_start':self.diag_start.numpy()
+        }
     def build(self, input_shape):
 
         input_shape = tensor_shape.TensorShape(input_shape)
