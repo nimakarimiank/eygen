@@ -6,8 +6,9 @@ from keras.losses import SparseCategoricalCrossentropy as scc
 from keras.datasets import mnist
 from keras.regularizers import l2
 from tensorflow import config
-import SpectralTools.TensorFlow.spectraltools as spectraltools
+#import SpectralTools.TensorFlow.spectraltools as spectraltools
 import numpy as np
+from spectral import Spectral, prune_percentile, metric_based_pruning
 
 
 physical_devices = config.experimental.list_physical_devices('GPU')
@@ -28,8 +29,8 @@ spectral_configuration = {'activation': 'relu',
 
 inputs = Input(shape=(28, 28,))
 x = Flatten()(inputs)
-y = spectraltools.spectraldense.Spectral(200,  **spectral_configuration, name='Spec1')(x)
-y = spectraltools.spectraldense.Spectral(300,  **spectral_configuration, name='Spec2')(y)
+y = Spectral(200,  **spectral_configuration, name='Spec1')(x)
+y = Spectral(300,  **spectral_configuration, name='Spec2')(y)
 outputs = Dense(10, activation="softmax", name='LastDense')(y)
 
 model = Model(inputs=inputs, outputs=outputs, name="branched")
@@ -43,12 +44,13 @@ model.fit(x_train, y_train, validation_split=0.2, batch_size=300, epochs=1, verb
 model.evaluate(x_test, y_test, batch_size=300)
 
 
-print(f'Model Type: {type(model)}')
 # Now the 30% of the spectral layers node will be in place pruned according to their relevance. The eigenvalues whose magnitude is smaller than the corresponding percentile will be set to zero by masking the corresponding weights. This will also have an effect on the corresponding bias which will be also masked.
 ## TODO ValueError: need at least one array to concatenate
-pruned_model = spectraltools.prune_percentile(model, 50,
+
+pruned_model = prune_percentile(model, 50,
                                 compile_dictionary=compile_dict)
 print(f'Pruned accuracy: {pruned_model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
+print('**************************** after Pruned_model ****************************')
 
 
 print(f'Baseline accuracy: {model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
@@ -58,7 +60,7 @@ for lay in pruned_model.layers:
     if hasattr(lay, 'diag_end_mask'):
         print(f'Layer {lay.name} has {np.count_nonzero(lay.diag_end_mask)} active nodes')
     
-pruned_model = spectraltools.metric_based_pruning(model, 
+pruned_model = metric_based_pruning(model, 
                      eval_dictionary=dict(x=x_train, y=y_train, batch_size=200),
                      compile_dictionary=compile_dict,
                      compare_metric='accuracy',
