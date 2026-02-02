@@ -19,6 +19,7 @@ class Spectral(Layer, PrunableLayer):
     def __init__(self,
                  units,
                  activation=None,
+                 diag_end_mask=None,
                  is_base_trainable=True,
                  is_diag_start_trainable=False,
                  is_diag_end_trainable=True,
@@ -106,7 +107,13 @@ class Spectral(Layer, PrunableLayer):
             dtype=self.dtype,
             trainable=self.is_base_trainable
         )
-
+        self.diag_end_mask = self.add_weight(
+            name='diag_end_mask',
+            shape=(1, self.units),
+            initializer='ones',
+            trainable=False,
+            dtype=self.dtype
+        )
         # trainable eigenvalues
         # \lambda_i
         self.diag_end = self.add_weight(
@@ -144,17 +151,47 @@ class Spectral(Layer, PrunableLayer):
             self.bias = None
 
         self.built = True
+    def mask_diag_end(self,
+                      cut_off):
+        """
+        This function sets to zero the diag_end that are below the cut_off changing the diag_end_mask. The mask will be
+        initialized to all ones and only the values that are below the cut_off will be set to zero.
+        It will be used in the pruning process.
+        :param cut_off: The cut_off value
+        :return: None
+        """
+        masking_conditions = self.conditions(cut_off)
+        tmp = np.zeros(shape=self.diag_end.shape)
+        tmp[0, masking_conditions] = 1
+        self.diag_end_mask.assign(tmp)
 
+    def conditions(self,
+                   cut_off):
+        masking_conditions: np.ndarray = abs(self.diag_end.numpy()) >= cut_off
+        return masking_conditions.reshape(-1)
+
+    def get_eigenvalues(self, masked=False):
+        """
+        This function returns the eigenvalues of the layer. Check that at least one between is_diag_end_trainable and
+        is_diag_start_trainable is True, otherwise returns an error. If is_diag_end_trainable is True, it returns diag_end. If also
+        is_diag_start_trainable is True, it returns diag_start and diag_end as a concatenated vector.
+        """
+        eigenvalues = {'diag_end': self.diag_end.numpy(), 'diag_start': self.diag_start.numpy()}
+        if masked:
+            eigenvalues['diag_end'] *= self.diag_end_mask
+        return eigenvalues
     def call(self, inputs, **kwargs):
-        if self.eigenvalue_mask is not None:
-            diag_end = self.diag_end * self.eigenvalue_mask
-        else:
-            diag_end = self.diag_end
+        diag_end = mul(self.diag_end, self.diag_end_mask)
+        #if self.eigenvalue_mask is not None:
+        #    diag_end = self.diag_end * self.eigenvalue_mask
+        #else:
+        #    diag_end = self.diag_end
 
         kernel = mul(self.base, self.diag_start - diag_end)
         outputs = matmul(a=inputs, b=kernel)
 
         if self.use_bias:
+            bias = mul(self.bias, self.diag_end_mask)
             outputs = outputs + self.bias
 
         if self.activation is not None:

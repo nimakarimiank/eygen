@@ -35,9 +35,7 @@ def eigenvalue_cutoff(model: Model, perc):
     index_list = []
     eigvals = []
     layers = layers_unwrap(model)
-    print(f"index_list: {index_list}")
-    print(f"eigvals: {eigvals}")
-    print(f"layers (len={len(layers)}): {layers}")
+
 
     # Cycle through all the layers. If a layer is spectral, save the eigenvalues and
     # the index of the layer in the model.
@@ -51,9 +49,7 @@ def eigenvalue_cutoff(model: Model, perc):
                                    "layer": type(lay).__name__})
         except AttributeError:
             pass
-    print (f" **************************** EIGVAL_CUTOFF Model summary: {model.summary()} ****************************")
-    print(f"eigenvalue_cutoff found {len(eigvals)} spectral layers.")
-    print(f"eigvals: {eigvals}")
+
     eigvals = np.concatenate(eigvals, axis=0).flatten()
 
     # Calculate the cutoff value
@@ -80,7 +76,6 @@ def prune_percentile(model: Model, percentile_threshold: float, compile_dictiona
 
 
     cut_off, index_list = eigenvalue_cutoff(model, percentile_threshold)
-    print("**************************** HERE WE FIXED IT ****************************")
     target_model = clone_model(model)
     target_model.set_weights(model.get_weights())
 
