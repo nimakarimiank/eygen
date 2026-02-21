@@ -67,17 +67,17 @@ print('**************************** after Pruned_model *************************
 print(f'Baseline accuracy: {model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
 # Cycle through the spectral layers and count the number of active nodes
 
-for lay in pruned_model.layers:
-    if hasattr(lay, 'diag_end_mask'):
-        print(f'Layer {lay.name} has {np.count_nonzero(lay.diag_end_mask)} active nodes')
+# for lay in pruned_model.layers:
+#     if hasattr(lay, 'diag_end_mask'):
+#         print(f'Layer {lay.name} has {np.count_nonzero(lay.diag_end_mask)} active nodes')
     
-pruned_model = metric_based_pruning(model, 
-                     eval_dictionary=dict(x=x_train, y=y_train, batch_size=200),
-                     compile_dictionary=compile_dict,
-                     compare_metric='accuracy',
-                     max_delta_percent=3)
+# pruned_model = metric_based_pruning(model, 
+#                      eval_dictionary=dict(x=x_train, y=y_train, batch_size=200),
+#                      compile_dictionary=compile_dict,
+#                      compare_metric='accuracy',
+#                      max_delta_percent=3)
 
-print(f'Pruned accuracy: {pruned_model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
-for lay in pruned_model.layers:
-    if hasattr(lay, 'diag_end_mask'):
-        print(f'Layer {lay.name} has {np.count_nonzero(lay.diag_end_mask)} active nodes')
+# print(f'Pruned accuracy: {pruned_model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
+# for lay in pruned_model.layers:
+#     if hasattr(lay, 'diag_end_mask'):
+#         print(f'Layer {lay.name} has {np.count_nonzero(lay.diag_end_mask)} active nodes')
