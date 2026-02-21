@@ -9,11 +9,21 @@ from tensorflow import config
 #import SpectralTools.TensorFlow.spectraltools as spectraltools
 import numpy as np
 from spectral import Spectral, prune_percentile, metric_based_pruning
-
-
+import argparse as ap
+parser = ap.ArgumentParser()
+parser.add_argument('--epochs', type=int, default=20, help='Number of epochs to train the model')
+parser.add_argument('--batch_size', type=int, default=300, help='Batch size for training and evaluation')
+parser.add_argument('--prune_percentile', type=float, default=90, help='Percentile for pruning the model')
+parser.add_argument('--layer_nodes', type=int, nargs='+', default=[20, 30], help='Number of nodes in each spectral layer')
+args = parser.parse_args()
 physical_devices = config.experimental.list_physical_devices('GPU')
 for dev in physical_devices:
     config.experimental.set_memory_growth(dev, True)
+
+
+
+
+
 
 
 
@@ -43,6 +53,7 @@ model.compile(**compile_dict)
 model.fit(x_train, y_train, validation_split=0.2, batch_size=300, epochs=1, verbose=1)
 model.evaluate(x_test, y_test, batch_size=300)
 
+print('**************************** before Pruned_model ****************************')
 
 # Now the 30% of the spectral layers node will be in place pruned according to their relevance. The eigenvalues whose magnitude is smaller than the corresponding percentile will be set to zero by masking the corresponding weights. This will also have an effect on the corresponding bias which will be also masked.
 ## TODO ValueError: need at least one array to concatenate
