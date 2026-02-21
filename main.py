@@ -1,4 +1,4 @@
-
+## python3 main.py --epochs 20 --batch_size 300 --prune_percentile 90 --layer_nodes 200 300
 from keras.models import Model
 from keras.layers import Dense, Flatten, Input, Average
 from keras.optimizers import Adam
