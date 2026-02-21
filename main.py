@@ -6,7 +6,6 @@ from keras.losses import SparseCategoricalCrossentropy as scc
 from keras.datasets import mnist
 from keras.regularizers import l2
 from tensorflow import config
-#import SpectralTools.TensorFlow.spectraltools as spectraltools
 import numpy as np
 from spectral import Spectral, prune_percentile, metric_based_pruning
 import argparse as ap
@@ -39,9 +38,9 @@ spectral_configuration = {'activation': 'relu',
 
 inputs = Input(shape=(28, 28,))
 x = Flatten()(inputs)
-y = Spectral(200,  **spectral_configuration, name='Spec1')(x)
-y = Spectral(300,  **spectral_configuration, name='Spec2')(y)
-outputs = Dense(10, activation="softmax", name='LastDense')(y)
+for i, nodes in enumerate(args.layer_nodes):
+    x = Spectral(nodes, **spectral_configuration, name=f'Spectral_{i}')(x)
+outputs = Dense(10, activation="softmax", name='LastDense')(x)
 
 model = Model(inputs=inputs, outputs=outputs, name="branched")
 
@@ -50,22 +49,24 @@ compile_dict=dict(optimizer=Adam(1E-3),
                   metrics=["accuracy"])
 
 model.compile(**compile_dict)
-model.fit(x_train, y_train, validation_split=0.2, batch_size=300, epochs=1, verbose=1)
-model.evaluate(x_test, y_test, batch_size=300)
+model.fit(x_train, y_train, validation_split=0.2, batch_size=args.batch_size, epochs=args.epochs, verbose=1)
+model.evaluate(x_test, y_test, batch_size=args.batch_size)
 
 print('**************************** before Pruned_model ****************************')
 
-# Now the 30% of the spectral layers node will be in place pruned according to their relevance. The eigenvalues whose magnitude is smaller than the corresponding percentile will be set to zero by masking the corresponding weights. This will also have an effect on the corresponding bias which will be also masked.
-## TODO ValueError: need at least one array to concatenate
+print(f'Baseline accuracy: {model.evaluate(x_test, y_test, batch_size=args.batch_size)[1]:.3f}')
+print('*********************************************************************************')
 
-pruned_model = prune_percentile(model, 50,
-                                compile_dictionary=compile_dict)
-print(f'Pruned accuracy: {pruned_model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
 print('**************************** after Pruned_model ****************************')
+pruned_model = prune_percentile(model, args.prune_percentile,
+                                compile_dictionary=compile_dict)
+print(f'Pruned accuracy: {pruned_model.evaluate(x_test, y_test, batch_size=args.batch_size)[1]:.3f}')
+print('*********************************************************************************')
 
 
-print(f'Baseline accuracy: {model.evaluate(x_test, y_test, batch_size=300)[1]:.3f}')
-# Cycle through the spectral layers and count the number of active nodes
+
+
+# # Cycle through the spectral layers and count the number of active nodes
 
 # for lay in pruned_model.layers:
 #     if hasattr(lay, 'diag_end_mask'):
