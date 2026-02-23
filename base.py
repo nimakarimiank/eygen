@@ -17,8 +17,9 @@ parser.add_argument('--batch_size', type=int, default=300, help='Batch size for 
 parser.add_argument('--prune_percentile', type=float, default=90, help='Percentile for pruning the model')
 parser.add_argument('--layer_nodes', type=int, nargs='+', default=[20, 30], help='Number of nodes in each spectral layer')
 args = parser.parse_args()
-layer_summary = format_nodes(args.layer_nodes + [10])
-layer_count = len(args.layer_nodes) + 1
+pruned_layer_nodes = [int(node * (100 - args.prune_percentile) / 100) for node in args.layer_nodes]
+layer_summary = format_nodes(pruned_layer_nodes)
+layer_count = len(pruned_layer_nodes) + 1
 physical_devices = config.experimental.list_physical_devices('GPU')
 for dev in physical_devices:
     config.experimental.set_memory_growth(dev, True)
@@ -37,8 +38,7 @@ spectral_configuration = {'activation': 'relu',
 
 inputs = Input(shape=(28, 28,))
 x = Flatten()(inputs)
-for i, nodes in enumerate(args.layer_nodes):
-    nodes = int(nodes * (100 - args.prune_percentile) / 100)
+for i, nodes in enumerate(pruned_layer_nodes):
     print(f'nodes: {nodes}')
     x = Spectral(nodes, **spectral_configuration, name=f'Spectral_{i}')(x)
 outputs = Dense(10, activation="softmax", name='LastDense')(x)
